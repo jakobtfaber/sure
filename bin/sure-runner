@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_PATH="$(perl -e 'use Cwd "abs_path"; print abs_path($ARGV[0])' "${BASH_SOURCE[0]}")"
+REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+
+cd "$REPO_DIR"
+
+MISE_BIN="$(command -v mise || true)"
+if [[ -z "$MISE_BIN" ]]; then
+  for candidate in "$HOME/.local/bin/mise" /opt/homebrew/bin/mise /usr/local/bin/mise; do
+    if [[ -x "$candidate" ]]; then
+      MISE_BIN="$candidate"
+      break
+    fi
+  done
+fi
+if [[ -z "$MISE_BIN" ]]; then
+  printf '%s\n' 'sure-runner: mise is required to select the project Ruby runtime.' >&2
+  exit 127
+fi
+exec "$MISE_BIN" exec -- bin/rails runner "$@"
